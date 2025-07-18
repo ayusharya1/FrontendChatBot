@@ -1,14 +1,14 @@
 import { useRef, useEffect, useState } from 'react';
 import React from 'react';
-import { FiBookOpen, FiVideo, FiUser, FiHome, FiCheckSquare, FiClipboard, FiLock } from 'react-icons/fi';
+import { FiBookOpen, FiVideo, FiUser } from 'react-icons/fi';
 import Header from './components/Header';
 import ErrorBanner from './components/ErrorBanner';
 import Suggestions from './components/Suggestions';
 import InputBar from './components/InputBar';
-import BottomNav from './components/BottomNav';
+
 import Sidebar from './components/Sidebar';
 import ReactMarkdown from 'react-markdown';
-import type { Chat, Message } from './types';
+import type { Chat} from './types';
 
 const suggestions = [
   { icon: <FiUser />, text: 'When does library open?' },
@@ -16,13 +16,13 @@ const suggestions = [
   { icon: <FiBookOpen />, text: 'Contact details' },
 ];
 
-const navItems = [
-  { icon: <FiHome />, label: 'Control' },
-  { icon: <FiCheckSquare />, label: 'Do' },
-  { icon: <span className="text-3xl">Ω</span>, label: '' },
-  { icon: <FiClipboard />, label: 'Test' },
-  { icon: <FiLock />, label: 'Fun Lock' },
-];
+// const navItems = [
+//   { icon: <FiHome />, label: 'Control' },
+//   { icon: <FiCheckSquare />, label: 'Do' },
+//   { icon: <span className="text-3xl">Ω</span>, label: '' },
+//   { icon: <FiClipboard />, label: 'Test' },
+//   { icon: <FiLock />, label: 'Fun Lock' },
+// ];
 
 const API_BASE_URL = 'https://backendchatbot-2bou.onrender.com';
 
@@ -32,7 +32,6 @@ export default function App() {
   const [input, setInput] = useState('');
   const [name] = useState('Ayush');
   const [loading, setLoading] = useState(false);
-  const [lastSentMessage, setLastSentMessage] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Chat state
@@ -58,7 +57,6 @@ export default function App() {
   // Send message to backend and update chat history
   const sendMessageToBackend = async (message: string) => {
     setLoading(true);
-    setLastSentMessage(message);
     try {
       const response = await fetch(`${API_BASE_URL}/ask`, {
         method: 'POST',
