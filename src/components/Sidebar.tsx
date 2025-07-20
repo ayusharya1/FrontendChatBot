@@ -89,7 +89,7 @@ const Sidebar = ({
       transform transition-all duration-500 ease-in-out
     `}>
       {/* Top Section */}
-      <div className="flex items-center justify-between pt-4 pb-2 px-3 border-b border-gray-800 mb-2">
+      <div className="flex items-center justify-between pt-4 pb-2 px-3 pl-4 border-b border-gray-800 mb-2">
         <span className="text-2xl font-bold tracking-tight text-indigo-400">Ω</span>
         <button
           onClick={onToggle}
@@ -103,7 +103,7 @@ const Sidebar = ({
           </svg>
         </button>
       </div>
-      <div className="flex flex-col gap-1 px-3">
+      <div className="flex flex-col gap-1 px-3 pl-0">
         <button
           onClick={onNewChat}
           className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors text-[0.96rem] font-normal"
@@ -137,7 +137,7 @@ const Sidebar = ({
               <div
                 key={chat.id}
                 className={`
-                  group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer
+                  group flex items-center gap-2 px-3 py-2 pl-2 rounded-lg cursor-pointer
                   truncate transition-all duration-150
                   ${currentChatId === chat.id ? 'bg-indigo-700 text-white font-semibold' : 'hover:bg-gray-800 text-gray-200'}
                 `}

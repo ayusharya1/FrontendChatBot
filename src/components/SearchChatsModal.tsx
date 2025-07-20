@@ -52,7 +52,11 @@ const SearchChatsModal: React.FC<SearchChatsModalProps> = ({ isOpen, onClose, ch
               {filteredChats.map(chat => (
                 <li
                   key={chat.id}
-                  className={`flex items-center gap-3 px-6 py-3 cursor-pointer transition-colors rounded-lg ${chat.id === currentChatId ? 'bg-indigo-700 text-white' : 'hover:bg-gray-800 text-gray-200'}`}
+                  className={`flex items-center gap-3 px-6 py-3 cursor-pointer transition-colors rounded-lg ${
+                    chat.id === currentChatId
+                      ? 'bg-indigo-700 text-white'
+                      : 'hover:bg-indigo-700 hover:text-white text-gray-200'
+                  }`}
                   onClick={() => { onSelectChat(chat.id); onClose(); }}
                 >
                   <span className="flex-1 truncate text-left text-sm font-normal">{chat.title}</span>

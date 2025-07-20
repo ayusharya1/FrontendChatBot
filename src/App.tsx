@@ -56,7 +56,7 @@ export default function App() {
       createdAt: new Date()
     }];
   });
-  const [currentChatId, setCurrentChatId] = useState<string | null>(chats[0]?.id || null);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
 
   // Persist chats to localStorage whenever they change
   useEffect(() => {
