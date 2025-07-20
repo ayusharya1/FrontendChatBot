@@ -1,4 +1,4 @@
-import { FiTrash2, FiZap } from 'react-icons/fi';
+import {  FiZap } from 'react-icons/fi';
 import React from 'react';
 
 interface HeaderProps {
@@ -9,7 +9,7 @@ interface HeaderProps {
   isSidebarCollapsed?: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ appName, subtitle,icon, isSidebarCollapsed }) => (
+const Header: React.FC<HeaderProps> = ({ appName, subtitle, isSidebarCollapsed }) => (
   <div className={`flex items-center justify-between px-6 pt-4 pb-2 ${!isSidebarCollapsed ? '' : 'pl-[5rem]'}`}>
     <div className="flex items-center gap-3">
       {/* <span className="text-2xl text-indigo-400 font-bold">{icon || 'Ω'}</span> */}

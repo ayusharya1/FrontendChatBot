@@ -1,5 +1,5 @@
-import { FiPlus, FiSearch, FiBookOpen, FiUser, FiSettings, FiHelpCircle } from 'react-icons/fi';
-import { HiOutlineBars3BottomLeft } from 'react-icons/hi2'; // fallback if needed
+import { FiPlus, FiSearch, FiSettings, FiHelpCircle } from 'react-icons/fi';
+ // fallback if needed
 import type { Chat } from '../types';
 import { useState, useRef, useEffect } from 'react';
 
