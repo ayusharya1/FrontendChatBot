@@ -11,7 +11,7 @@ interface SuggestionsProps {
 }
 
 const Suggestions: React.FC<SuggestionsProps> = ({ suggestions, onSuggestionClick }) => (
-  <div className="flex flex-col gap-4 mb-10">
+  <div className="flex flex-col gap-4 mb-8">
     {suggestions.map((s, i) => (
       <button
         key={i}

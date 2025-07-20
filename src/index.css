@@ -4,3 +4,6 @@
 body,html{
     overflow-x: hidden;
 }
+.cursor-expand-arrows {
+  cursor: url('/cursor.cur'), pointer;
+}

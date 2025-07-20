@@ -8,7 +8,7 @@ interface InputBarProps {
 }
 
 const InputBar: React.FC<InputBarProps> = ({ value, onChange, onSend, placeholder }) => (
-  <div className="relative w-full max-w-2xl mb-[0.5rem]">
+  <div className="relative w-full max-w-4xl mb-[0.5rem]">
     <input
       type="text"
       value={value}
