@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from 'react';
 import React from 'react';
-import { FiBookOpen, FiUser, FiAlertCircle } from 'react-icons/fi';
+import { FiBookOpen, FiUser, FiAlertCircle, FiEye, FiEyeOff, FiLock } from 'react-icons/fi';
 import Header from './components/Header';
 import ErrorBanner from './components/ErrorBanner';
 import Suggestions from './components/Suggestions';
@@ -36,6 +36,43 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+const [mode, setMode] = useState<'normal' | 'professional'>('normal');
+const [modeError, setModeError] = useState('');
+const [showCodeModal, setShowCodeModal] = useState(false);
+const [codeInput, setCodeInput] = useState('');
+const [showPassword, setShowPassword] = useState(false);
+
+// Handler for mode change with custom modal
+const handleModeChange = (newMode: 'normal' | 'professional') => {
+  if (newMode === 'professional') {
+    setShowCodeModal(true);
+  } else {
+    setMode('normal');
+    setModeError('');
+  }
+};
+
+const handleCodeSubmit = (e?: React.FormEvent) => {
+  if (e) e.preventDefault();
+  if (codeInput === 'IISERM') {
+    setMode('professional');
+    setModeError('');
+    setShowCodeModal(false);
+    setCodeInput('');
+  } else {
+    setMode('normal');
+    setModeError('Incorrect code. Professional mode not enabled.');
+    setCodeInput(''); // Clear password input on wrong code
+  }
+};
+
+const handleCodeModalClose = () => {
+  setShowCodeModal(false);
+  setCodeInput('');
+  setMode('normal');
+  setModeError('');
+  setShowPassword(false);
+};
 
   // Chat state
   const [chats, setChats] = useState<Chat[]>(() => {
@@ -56,15 +93,52 @@ export default function App() {
       createdAt: new Date()
     }];
   });
-  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  
+  const [currentChatId, setCurrentChatId] = useState<string | null>(() => {
+    // Try to get the current chat ID from localStorage
+    const storedCurrentChatId = localStorage.getItem('currentChatId');
+    if (storedCurrentChatId) {
+      return storedCurrentChatId;
+    }
+    return null;
+  });
 
   // Persist chats to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('chats', JSON.stringify(chats));
   }, [chats]);
 
+  // Persist current chat ID to localStorage whenever it changes
+  useEffect(() => {
+    if (currentChatId) {
+      localStorage.setItem('currentChatId', currentChatId);
+    } else {
+      localStorage.removeItem('currentChatId');
+    }
+  }, [currentChatId]);
+
+  // Initialize current chat on first load
+  useEffect(() => {
+    if (!currentChatId && chats.length > 0) {
+      // If no current chat is set, select the first (most recent) chat
+      setCurrentChatId(chats[0].id);
+    } else if (currentChatId && !chats.find(chat => chat.id === currentChatId)) {
+      // If current chat ID exists but the chat doesn't exist (was deleted), select the first available chat
+      setCurrentChatId(chats.length > 0 ? chats[0].id : null);
+    }
+  }, [chats, currentChatId]);
+
   // Get current chat
   const currentChat = chats.find(chat => chat.id === currentChatId);
+
+  // Handle chat selection with cleanup
+  const handleChatSelect = (chatId: string) => {
+    setCurrentChatId(chatId);
+    // Clear any pending assistant messages when switching chats
+    setPendingAssistantMessage('');
+    setDisplayedAssistantMessage('');
+    setIsTypewriting(false);
+  };
 
   // Auto-dismiss error after 3 seconds
   React.useEffect(() => {
@@ -83,10 +157,13 @@ export default function App() {
   const sendMessageToBackend = async (message: string) => {
     setLoading(true);
     try {
+      const body = mode === 'professional'
+        ? { question: message, mode, access_code: codeInput || 'IISERM' }
+        : { question: message, mode, access_code: null };
       const response = await fetch(`${API_BASE_URL}/ask`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: message }),
+        body: JSON.stringify(body),
       });
       if (!response.ok) {
         let msg = 'Backend error';
@@ -98,9 +175,23 @@ export default function App() {
       }
       const data = await response.json();
       if (typeof data.answer === 'string') {
-        setPendingAssistantMessage(data.answer);
-        setDisplayedAssistantMessage('');
-        setIsTypewriting(true);
+        // Check for error pattern
+        if (
+          data.answer.includes('Error occurred:') ||
+          data.answer.includes('⚠️') ||
+          data.answer.toLowerCase().includes('quota') ||
+          data.answer.toLowerCase().includes('insufficient_quota')
+        ) {
+          setError(true);
+          setErrorMessage(data.answer);
+          setPendingAssistantMessage('');
+          setDisplayedAssistantMessage('');
+          setIsTypewriting(false);
+        } else {
+          setPendingAssistantMessage(data.answer);
+          setDisplayedAssistantMessage('');
+          setIsTypewriting(true);
+        }
       } else {
         setPendingAssistantMessage('Sorry, I did not understand the response.');
         setDisplayedAssistantMessage('');
@@ -171,6 +262,10 @@ export default function App() {
     setChats(prev => [newChat, ...prev]);
     setCurrentChatId(newChat.id);
     setInput('');
+    // Clear any pending assistant messages when creating a new chat
+    setPendingAssistantMessage('');
+    setDisplayedAssistantMessage('');
+    setIsTypewriting(false);
   };
 
   const deleteChat = (chatId: string) => {
@@ -182,6 +277,10 @@ export default function App() {
     if (currentChatId === chatId) {
       const remaining = chats.filter(chat => chat.id !== chatId);
       setCurrentChatId(remaining[0]?.id || null);
+      // Clear any pending assistant messages when switching chats
+      setPendingAssistantMessage('');
+      setDisplayedAssistantMessage('');
+      setIsTypewriting(false);
     }
   };
 
@@ -192,24 +291,18 @@ export default function App() {
 
   // Enhance AI responses: insert emojis contextually, add friendly intro, improve readability
   function enhanceAIResponse(text: string): string {
-    // Insert emojis contextually within the text
-    let enhanced = text
-      .replace(/(workshop[s]?)/gi, '$1 🎓')
-      // .replace(/(book[s]?)/gi, '$1 📚')
-      // .replace(/(contact|help|assist)/gi, '$1 🙋‍♂️')
-      // .replace(/(digital resource[s]?|online|website|platform)/gi, '$1 🌐')
-      .replace(/(thank(s| you)?|welcome|happy|glad|great|awesome|appreciate)/gi, '$1 😊')
-      .replace(/(error|sorry|unavailable|not found|apolog|issue|problem|fail)/gi, '$1 ⚠️')
-      .replace(/(congrat|celebrat|success|well done|good job)/gi, '$1 🎉');
+    // Remove emoji enhancements
 
     // Convert numbered lists, markdown bullets, and lines like 'Item 1:' to lines starting with •
-    enhanced = enhanced
+    let enhanced = text
       .replace(/(?:^|\n)\s*\d+\.\s+/g, '\n• ')
       .replace(/(?:^|\n)[•*]\s+/g, '\n• ')
       .replace(/(?:^|\n)(Item|Step) \d+:\s+/gi, '\n• ');
 
-    // Ensure bullets are on separate lines
+    // Ensure bullets are on separate lines and all content is on its own line
     enhanced = enhanced.replace(/\n• /g, '\n\n• ');
+    enhanced = enhanced.replace(/([^\n])\n• /g, '$1\n\n• '); // Extra safety for bullets
+    enhanced = enhanced.replace(/([^\n])\n/g, '$1\n'); // Ensure all content is on its own line
 
     // Add a friendly intro only for long responses
     const isLong = enhanced.length > 520 || (enhanced.match(/\n\n/g) || []).length > 0;
@@ -285,7 +378,7 @@ export default function App() {
       <Sidebar
         chats={chats}
         currentChatId={currentChatId}
-        onChatSelect={setCurrentChatId}
+        onChatSelect={handleChatSelect}
         onNewChat={createNewChat}
         onDeleteChat={deleteChat}
         isCollapsed={isSidebarCollapsed}
@@ -294,19 +387,67 @@ export default function App() {
       />
       {/* Main area */}
       <div className="flex-1 flex flex-col">
-        <Header
-          appName="Ridan"
-          subtitle="IISER Mohali Library"
-          onDelete={() => { /* real delete logic here, no error trigger */ }}
-          icon={<span className="text-3xl text-indigo-400 font-bold">Ω</span>}
-          isSidebarCollapsed={isSidebarCollapsed}
-        />
-        <ErrorBanner
-          message={errorMessage || "Failed to load document."}
-          subMessage="Please try again or check the file format."
-          onRetry={() => setError(false)}
-          visible={error}
-        />
+      <Header
+  appName="Ridan"
+  subtitle="IISER Mohali Library"
+  onDelete={() => {}}
+  icon={<span className="text-3xl text-indigo-400 font-bold">Ω</span>}
+  isSidebarCollapsed={isSidebarCollapsed}
+  mode={mode}
+  setMode={handleModeChange}
+/>
+
+      {/* Professional Mode Code Modal */}
+      {showCodeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+          <div className="bg-[#23272f] rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-0 relative flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-700">
+              <div className="text-lg font-semibold text-white">Enter Professional Mode Code</div>
+              <button onClick={handleCodeModalClose} className="ml-4 p-2 rounded hover:bg-gray-700 transition-colors text-gray-400">
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <form onSubmit={handleCodeSubmit} className="flex flex-col gap-4 px-6 py-6">
+              <div className="relative flex items-center">
+                <span className="absolute left-3 text-indigo-400">
+                  <FiLock size={20} />
+                </span>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  autoFocus
+                  value={codeInput}
+                  onChange={e => setCodeInput(e.target.value)}
+                  placeholder="Enter Password"
+                  className="bg-gray-800 border border-gray-600 text-white text-base rounded-md pl-10 pr-10 py-2 focus:outline-none placeholder-gray-400 w-full"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 text-indigo-400 hover:text-indigo-200 focus:outline-none"
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+                </button>
+              </div>
+              {modeError && <div className="text-red-400 text-sm font-medium">{modeError}</div>}
+              <button
+                type="submit"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-md px-4 py-2 transition-colors"
+              >
+                Unlock Professional Mode
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+      <ErrorBanner
+        message={errorMessage || "Failed to load document."}
+        subMessage="Please try again or check the file format."
+        onRetry={() => { setError(false); setModeError(''); }}
+        visible={error}
+      />
         {/* Chat Area */}
         <div className="flex-1 flex flex-col px-0">
           <div
@@ -391,7 +532,7 @@ export default function App() {
         onClose={() => setIsSearchModalOpen(false)}
         chats={chats}
         currentChatId={currentChatId}
-        onSelectChat={setCurrentChatId}
+        onSelectChat={handleChatSelect}
       />
       {/* Hide scrollbar for chat area if not using Tailwind's plugin */}
       <style>{`

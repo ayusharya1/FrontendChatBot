@@ -48,9 +48,9 @@ const Sidebar = ({
               onMouseLeave={() => setLogoHovered(false)}
               style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              <span className="transition-all duration-200 flex items-center justify-center" style={{ width: 22, height: 18 }}>
+              <span className="transition-all duration-200 flex items-center justify-center" style={{ width: 20, height: 18 }}>
                 {logoHovered ? (
-                  <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg width="20" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="1" y="2" width="20" height="14" rx="5" stroke="#ccc" strokeWidth="2" fill="none" />
                     <rect x="10" y="2" width="2" height="14" rx="1" fill="#ccc" />
                   </svg>
