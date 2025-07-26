@@ -26,7 +26,7 @@ const suggestions = [
 // ];
 
 // const API_BASE_URL = 'http://localhost:8000';
-const API_BASE_URL = 'https://backendchatbot-2bou.onrender.com';
+const API_BASE_URL = 'https://backendchatbot-2bou.onrender.com/';
 
 export default function App() {
   const [error, setError] = useState(false);

@@ -9,7 +9,8 @@ const InputArea = ({ onSendMessage }: InputAreaProps) => {
   const [isTyping, setIsTyping] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const API_BASE_URL = 'http://localhost:8000'
+  // const API_BASE_URL = 'http://localhost:8000'
+  const API_BASE_URL = 'https://backendchatbot-2bou.onrender.com'
 
   const sendMessageToBackend = async (userMessage: string): Promise<string> => {
     try {
